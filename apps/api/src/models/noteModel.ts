@@ -1,4 +1,14 @@
-import mongoose from "mongoose";
+import mongoose, { InferSchemaType } from "mongoose";
+
+export interface Note {
+  title: string;
+  content: string;
+  category: mongoose.Types.ObjectId;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface NoteDocument extends Note, mongoose.Document {}
 
 const noteSchema = new mongoose.Schema({
   title: {
@@ -7,7 +17,7 @@ const noteSchema = new mongoose.Schema({
   },
   content: {
     type: String,
-    required: true,
+    required: false,
   },
   category: {
     type: mongoose.Schema.Types.ObjectId,
@@ -24,4 +34,4 @@ const noteSchema = new mongoose.Schema({
   },
 });
 
-export default mongoose.model("Note", noteSchema);
+export default mongoose.model<NoteDocument>("Note", noteSchema);

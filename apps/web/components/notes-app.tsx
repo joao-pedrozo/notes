@@ -1,143 +1,206 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { NotesList } from "@/components/notes-list"
-import { NoteEditor } from "@/components/note-editor"
-import { NotesHeader } from "@/components/notes-header"
-import { FoldersSidebar, type FolderType } from "@/components/folders-sidebar"
-import { FileText } from "lucide-react"
+import { useState, useEffect, useMemo } from "react";
+import { NotesList } from "@/components/notes-list";
+import { NoteEditor } from "@/components/note-editor";
+import { NotesHeader } from "@/components/notes-header";
+import { FoldersSidebar, type FolderType } from "@/components/folders-sidebar";
+import { FileText } from "lucide-react";
+import { useNotes, type Note as ApiNote } from "@/hooks/useNotes";
+import { useCategories } from "@/hooks/useCategories";
 
 export interface Note {
-  id: string
-  title: string
-  content: string
-  updatedAt: Date
-  folderId: string | null
+  id: string;
+  title: string;
+  content: string;
+  updatedAt: Date;
+  folderId: string | null;
 }
 
 export function NotesApp() {
-  const [notes, setNotes] = useState<Note[]>([])
-  const [selectedNoteId, setSelectedNoteId] = useState<string | null>(null)
-  const [searchQuery, setSearchQuery] = useState("")
-  const [folders, setFolders] = useState<FolderType[]>([])
-  const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null)
+  const [selectedNoteId, setSelectedNoteId] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
 
-  // Load notes and folders from localStorage on mount
+  const {
+    notes: apiNotes,
+    isLoading,
+    createNote: createNoteApi,
+    updateNote: updateNoteApi,
+    deleteNote: deleteNoteApi,
+    isCreating,
+    isUpdating,
+    isDeleting,
+  } = useNotes();
+
+  const {
+    categories: allCategories,
+    isLoading: isCategoriesLoading,
+    createCategory: createCategoryApi,
+    updateCategory: updateCategoryApi,
+    deleteCategory: deleteCategoryApi,
+    isCreating: isCreatingCategory,
+    isUpdating: isUpdatingCategory,
+    isDeleting: isDeletingCategory,
+  } = useCategories();
+
+  // Converter notas da API para o formato do componente
+  const notes = useMemo(() => {
+    return apiNotes.map((apiNote) => ({
+      id: apiNote._id,
+      title: apiNote.title,
+      content: apiNote.content,
+      updatedAt: new Date(apiNote.updatedAt),
+      folderId: apiNote.category || null, // Usando category como folderId temporariamente
+    }));
+  }, [apiNotes]);
+
+  // Selecionar primeira nota quando carregar
   useEffect(() => {
-    const savedNotes = localStorage.getItem("notes")
-    const savedFolders = localStorage.getItem("folders")
-
-    if (savedFolders) {
-      setFolders(JSON.parse(savedFolders))
+    if (!isLoading && notes.length > 0 && !selectedNoteId) {
+      setSelectedNoteId(notes[0].id);
     }
-
-    if (savedNotes) {
-      const parsedNotes = JSON.parse(savedNotes)
-      const notesWithDates = parsedNotes.map((note: Note) => ({
-        ...note,
-        updatedAt: new Date(note.updatedAt),
-      }))
-      setNotes(notesWithDates)
-      if (notesWithDates.length > 0) {
-        setSelectedNoteId(notesWithDates[0].id)
-      }
-    } else {
-      // Create a welcome note
-      const welcomeNote: Note = {
-        id: crypto.randomUUID(),
-        title: "Bem-vindo ao Notes",
-        content: "Comece a escrever suas notas aqui...",
-        updatedAt: new Date(),
-        folderId: null,
-      }
-      setNotes([welcomeNote])
-      setSelectedNoteId(welcomeNote.id)
-    }
-  }, [])
-
-  // Save notes to localStorage whenever they change
-  useEffect(() => {
-    if (notes.length > 0) {
-      localStorage.setItem("notes", JSON.stringify(notes))
-    }
-  }, [notes])
-
-  useEffect(() => {
-    localStorage.setItem("folders", JSON.stringify(folders))
-  }, [folders])
-
-  useEffect(() => {
-    setFolders((prevFolders) =>
-      prevFolders.map((folder) => ({
-        ...folder,
-        noteCount: notes.filter((note) => note.folderId === folder.id).length,
-      })),
-    )
-  }, [notes])
+  }, [isLoading, notes, selectedNoteId]);
 
   const resetToDefaultState = () => {
-    setSelectedNoteId(null)
-    setSelectedFolderId(null)
-    setSearchQuery("")
-  }
+    setSelectedNoteId(null);
+    setSelectedFolderId(null);
+    setSearchQuery("");
+  };
 
-  const createNote = () => {
-    const newNote: Note = {
-      id: crypto.randomUUID(),
-      title: "Nova Nota",
-      content: "",
-      updatedAt: new Date(),
-      folderId: selectedFolderId,
+  const createNote = async () => {
+    try {
+      // Se uma categoria estiver selecionada, usar ela; senão, usar a primeira disponível ou criar uma
+      let categoryId = selectedFolderId;
+
+      if (!categoryId && allCategories.length > 0) {
+        // Se não há categoria selecionada, usar a primeira disponível
+        categoryId = allCategories[0]._id;
+      } else if (!categoryId && allCategories.length === 0) {
+        // Se não há categorias, criar uma padrão
+        const defaultCategory = await createCategoryApi({ name: "Geral" });
+        categoryId = defaultCategory._id;
+        setSelectedFolderId(categoryId);
+      }
+
+      if (!categoryId) {
+        throw new Error("Não foi possível criar a nota. Tente novamente.");
+      }
+
+      const newNote = await createNoteApi({
+        title: "Nova Nota",
+        content: "",
+        category: categoryId,
+      });
+
+      if (newNote) {
+        setSelectedNoteId(newNote._id);
+      }
+    } catch (error) {
+      console.error("Erro ao criar nota:", error);
     }
-    setNotes([newNote, ...notes])
-    setSelectedNoteId(newNote.id)
-  }
+  };
 
-  const updateNote = (id: string, title: string, content: string) => {
-    setNotes(notes.map((note) => (note.id === id ? { ...note, title, content, updatedAt: new Date() } : note)))
-  }
+  const updateNote = async (id: string, title: string, content: string) => {
+    try {
+      const note = notes.find((n) => n.id === id);
+      if (!note) return;
 
-  const deleteNote = (id: string) => {
-    const updatedNotes = notes.filter((note) => note.id !== id)
-    setNotes(updatedNotes)
-    if (selectedNoteId === id) {
-      setSelectedNoteId(updatedNotes.length > 0 ? updatedNotes[0].id : null)
+      await updateNoteApi({
+        id,
+        input: {
+          title,
+          content,
+          category: note.folderId || undefined,
+        },
+      });
+    } catch (error) {
+      console.error("Erro ao atualizar nota:", error);
     }
-  }
+  };
 
-  const createFolder = () => {
-    const newFolder: FolderType = {
-      id: crypto.randomUUID(),
-      name: "Nova Pasta",
-      noteCount: 0,
+  const deleteNote = async (id: string) => {
+    try {
+      await deleteNoteApi(id);
+      const updatedNotes = notes.filter((note) => note.id !== id);
+      if (selectedNoteId === id) {
+        setSelectedNoteId(updatedNotes.length > 0 ? updatedNotes[0].id : null);
+      }
+    } catch (error) {
+      console.error("Erro ao deletar nota:", error);
     }
-    setFolders([...folders, newFolder])
-  }
+  };
 
-  const renameFolder = (id: string, name: string) => {
-    setFolders(folders.map((folder) => (folder.id === id ? { ...folder, name } : folder)))
-  }
+  // Converter categories para folders e filtrar apenas as que têm notas
+  const folders = useMemo(() => {
+    // Buscar IDs de categories que têm notas relacionadas
 
-  const deleteFolder = (id: string) => {
-    // Move notes from deleted folder to "All Notes"
-    setNotes(notes.map((note) => (note.folderId === id ? { ...note, folderId: null } : note)))
-    setFolders(folders.filter((folder) => folder.id !== id))
-    if (selectedFolderId === id) {
-      setSelectedFolderId(null)
+    // Filtrar categories que estão em uso
+
+    // Calcular noteCount para cada category
+    return allCategories.map((category) => ({
+      id: category._id,
+      name: category.name,
+      noteCount: notes.filter((note) => note.folderId === category._id).length,
+    }));
+  }, [allCategories, notes]);
+
+  const createFolder = async () => {
+    try {
+      const newCategory = await createCategoryApi({
+        name: "Nova Pasta",
+      });
+
+      if (newCategory) {
+        // Selecionar a nova categoria automaticamente
+        setSelectedFolderId(newCategory._id);
+      }
+    } catch (error) {
+      console.error("Erro ao criar pasta:", error);
     }
-  }
+  };
 
-  const selectedNote = notes.find((note) => note.id === selectedNoteId)
+  const renameFolder = async (id: string, name: string) => {
+    try {
+      await updateCategoryApi({
+        id,
+        input: { name },
+      });
+    } catch (error) {
+      console.error("Erro ao renomear pasta:", error);
+    }
+  };
+
+  const deleteFolder = async (id: string) => {
+    try {
+      // Primeiro, mover todas as notas dessa categoria para "sem categoria"
+      // Nota: Isso requer atualizar cada nota individualmente
+      // Por enquanto, vamos apenas deletar a categoria
+      // As notas ficarão sem categoria (null)
+      await deleteCategoryApi(id);
+
+      if (selectedFolderId === id) {
+        setSelectedFolderId(null);
+      }
+    } catch (error) {
+      console.error("Erro ao deletar pasta:", error);
+    }
+  };
+
+  const selectedNote = notes.find((note) => note.id === selectedNoteId);
 
   const filteredNotes = notes.filter((note) => {
-    const matchesFolder = selectedFolderId === null || note.folderId === selectedFolderId
+    const matchesFolder =
+      selectedFolderId === null || note.folderId === selectedFolderId;
     const matchesSearch =
       note.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      note.content.toLowerCase().includes(searchQuery.toLowerCase())
-    return matchesFolder && matchesSearch
-  })
+      note.content.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesFolder && matchesSearch;
+  });
 
-  const totalNotesCount = notes.length
+  const totalNotesCount = notes.length;
+
+  const isLoadingData = isLoading || isCategoriesLoading;
 
   return (
     <div className="flex h-screen bg-background">
@@ -149,6 +212,7 @@ export function NotesApp() {
         onRenameFolder={renameFolder}
         onDeleteFolder={deleteFolder}
         totalNotesCount={totalNotesCount}
+        isLoading={isLoadingData}
       />
       <div className="flex w-80 flex-col border-r border-border">
         <NotesHeader
@@ -174,7 +238,9 @@ export function NotesApp() {
                 <FileText className="h-12 w-12 text-muted-foreground" />
               </div>
               <div className="space-y-2">
-                <h2 className="text-2xl font-semibold text-foreground">Nenhuma nota selecionada</h2>
+                <h2 className="text-2xl font-semibold text-foreground">
+                  Nenhuma nota selecionada
+                </h2>
                 <p className="text-sm text-muted-foreground">
                   Selecione uma nota da lista ou crie uma nova para começar.
                 </p>
@@ -184,5 +250,5 @@ export function NotesApp() {
         )}
       </div>
     </div>
-  )
+  );
 }

@@ -1,5 +1,13 @@
 import mongoose from "mongoose";
 
+export interface Category {
+  name: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface CategoryDocument extends Category, mongoose.Document {}
+
 const categorySchema = new mongoose.Schema({
   name: {
     type: String,
@@ -15,4 +23,4 @@ const categorySchema = new mongoose.Schema({
   },
 });
 
-export default mongoose.model("Category", categorySchema);
+export default mongoose.model<CategoryDocument>("Category", categorySchema);

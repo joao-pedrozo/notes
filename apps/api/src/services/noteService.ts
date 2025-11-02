@@ -28,6 +28,7 @@ const createNote = async (input: CreateNoteInput) => {
   validateCategoryId(input.category);
 
   const category = await Category.findById(input.category);
+
   if (!category) {
     throw new Error(`Category with ID "${input.category}" does not exist.`);
   }
@@ -39,8 +40,8 @@ const createNote = async (input: CreateNoteInput) => {
       category: input.category,
     });
     return await note.save();
-  } catch (error: any) {
-    if (error.name === "ValidationError") {
+  } catch (error) {
+    if (error instanceof Error && error.name === "ValidationError") {
       throw new Error(`Note validation failed: ${error.message}`);
     }
     throw error;

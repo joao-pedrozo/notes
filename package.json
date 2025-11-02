@@ -1,0 +1,29 @@
+{
+  "name": "notes",
+  "module": "index.ts",
+  "type": "module",
+  "private": true,
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "scripts": {
+    "dev": "bun run --filter=api dev",
+    "dev:web": "bun run --filter=web dev",
+    "dev:all": "bun run --parallel dev dev:web",
+    "test": "bun test",
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down",
+    "docker:logs": "docker-compose logs -f",
+    "test:setup": "docker-compose up -d mongodb_test",
+    "test:cleanup": "docker-compose down",
+    "test:connection": "bun run --filter=api test:connection",
+    "seed:api": "bun run packages/api/src/scripts/seed.ts"
+  }
+}

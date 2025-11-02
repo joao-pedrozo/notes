@@ -1,0 +1,34 @@
+version: "3.8"
+
+services:
+  mongodb:
+    image: mongo:7.0
+    container_name: notes_mongodb
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    # Removido autenticação para facilitar desenvolvimento
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - notes_network # ✅ Now this matches the defined network
+
+  mongodb_test:
+    image: mongo:7.0
+    container_name: notes_mongodb_test
+    restart: unless-stopped
+    ports:
+      - "27018:27017"
+    # Removido autenticação para facilitar testes
+    volumes:
+      - mongodb_test_data:/data/db
+    networks:
+      - notes_network # ✅ Now this matches the defined network
+
+volumes:
+  mongodb_data:
+  mongodb_test_data:
+
+networks:
+  notes_network: # ✅ Changed from bakery_network to notes_network
+    driver: bridge

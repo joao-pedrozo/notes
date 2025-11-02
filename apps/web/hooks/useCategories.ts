@@ -75,7 +75,6 @@ export function useCategories() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["categories"] });
-      toast.success("Categoria criada com sucesso!");
     },
     onError: (error: Error) => {
       toast.error(error.message || "Erro ao criar categoria");

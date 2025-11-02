@@ -103,7 +103,6 @@ export function useNotes() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["notes"] });
-      toast.success("Nota criada com sucesso!");
     },
     onError: (error: Error) => {
       toast.error(error.message || "Erro ao criar nota");

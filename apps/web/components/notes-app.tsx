@@ -44,18 +44,16 @@ export function NotesApp() {
     isDeleting: isDeletingCategory,
   } = useCategories();
 
-  // Converter notas da API para o formato do componente
   const notes = useMemo(() => {
     return apiNotes.map((apiNote) => ({
       id: apiNote._id,
       title: apiNote.title,
       content: apiNote.content,
       updatedAt: new Date(apiNote.updatedAt),
-      folderId: apiNote.category || null, // Usando category como folderId temporariamente
+      folderId: apiNote.category || null,
     }));
   }, [apiNotes]);
 
-  // Selecionar primeira nota quando carregar
   useEffect(() => {
     if (!isLoading && notes.length > 0 && !selectedNoteId) {
       setSelectedNoteId(notes[0].id);
@@ -70,14 +68,11 @@ export function NotesApp() {
 
   const createNote = async () => {
     try {
-      // Se uma categoria estiver selecionada, usar ela; senão, usar a primeira disponível ou criar uma
       let categoryId = selectedFolderId;
 
       if (!categoryId && allCategories.length > 0) {
-        // Se não há categoria selecionada, usar a primeira disponível
         categoryId = allCategories[0]._id;
       } else if (!categoryId && allCategories.length === 0) {
-        // Se não há categorias, criar uma padrão
         const defaultCategory = await createCategoryApi({ name: "Geral" });
         categoryId = defaultCategory._id;
         setSelectedFolderId(categoryId);

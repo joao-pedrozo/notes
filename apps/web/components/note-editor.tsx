@@ -20,12 +20,18 @@ export function NoteEditor({ note, onUpdateNote }: NoteEditorProps) {
 
   const handleTitleChange = (newTitle: string) => {
     setTitle(newTitle);
-    onUpdateNote(note.id, newTitle, content);
   };
 
   const handleContentChange = (newContent: string) => {
     setContent(newContent);
-    onUpdateNote(note.id, title, newContent);
+  };
+
+  const handleTitleBlur = () => {
+    onUpdateNote(note.id, title, content);
+  };
+
+  const handleContentBlur = () => {
+    onUpdateNote(note.id, title, content);
   };
 
   return (
@@ -33,12 +39,14 @@ export function NoteEditor({ note, onUpdateNote }: NoteEditorProps) {
       <input
         value={title}
         onChange={(e) => handleTitleChange(e.target.value)}
+        onBlur={handleTitleBlur}
         placeholder="Título"
         className="mb-4 border-0 outline-0 bg-transparent text-lg font-bold focus-visible:ring-0 px-0"
       />
       <MarkdownEditor
         value={content}
         onChange={handleContentChange}
+        onBlur={handleContentBlur}
         placeholder="Comece a escrever... Use # para títulos, **negrito**, *itálico*, - para listas"
       />
     </div>

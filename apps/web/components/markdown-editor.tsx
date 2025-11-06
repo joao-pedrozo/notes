@@ -8,12 +8,14 @@ interface MarkdownEditorProps {
   value: string;
   onChange: (value: string) => void;
   placeholder?: string;
+  onBlur?: () => void;
 }
 
 export function MarkdownEditor({
   value,
   onChange,
   placeholder,
+  onBlur,
 }: MarkdownEditorProps) {
   const [isEditing, setIsEditing] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -104,7 +106,10 @@ export function MarkdownEditor({
           value={value}
           onChange={(e) => onChange(e.target.value)}
           onFocus={() => setIsEditing(true)}
-          onBlur={() => setIsEditing(false)}
+          onBlur={() => {
+            setIsEditing(false);
+            onBlur?.();
+          }}
           onKeyDown={handleKeyDown}
           placeholder={placeholder}
           className="absolute inset-0 w-full h-full resize-none border-0 bg-transparent text-base leading-relaxed focus-visible:ring-0 px-0 py-0 font-mono text-foreground/90 caret-foreground outline-none"

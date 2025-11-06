@@ -19,7 +19,6 @@ export interface UpdateCategoryInput {
   name?: string;
 }
 
-// Função auxiliar para normalizar categories do MongoDB
 function normalizeCategory(category: any): Category {
   return {
     _id: category._id?.toString() || category.id || "",
@@ -36,7 +35,6 @@ function normalizeCategory(category: any): Category {
 export function useCategories() {
   const queryClient = useQueryClient();
 
-  // Listar todas as categorias
   const {
     data: categories,
     isLoading,
@@ -61,7 +59,6 @@ export function useCategories() {
     },
   });
 
-  // Criar categoria
   const createMutation = useMutation({
     mutationFn: async (input: CreateCategoryInput) => {
       const response = await api.categories.post(input);
@@ -81,7 +78,6 @@ export function useCategories() {
     },
   });
 
-  // Atualizar categoria
   const updateMutation = useMutation({
     mutationFn: async ({
       id,
@@ -90,7 +86,6 @@ export function useCategories() {
       id: string;
       input: UpdateCategoryInput;
     }) => {
-      // Garantir que name está presente
       if (!input.name) {
         throw new Error("Nome da categoria é obrigatório");
       }
@@ -114,7 +109,6 @@ export function useCategories() {
     },
   });
 
-  // Deletar categoria
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
       const response = await api.categories({ id }).delete();

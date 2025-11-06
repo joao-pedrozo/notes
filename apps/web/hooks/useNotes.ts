@@ -43,7 +43,6 @@ function normalizeNote(note: any): Note {
 export function useNotes() {
   const queryClient = useQueryClient();
 
-  // Listar todas as notas
   const {
     data: notes,
     isLoading,
@@ -66,7 +65,6 @@ export function useNotes() {
     },
   });
 
-  // Buscar nota por ID
   const useNote = (id: string | null) => {
     return useQuery({
       queryKey: ["notes", id],
@@ -89,7 +87,6 @@ export function useNotes() {
     });
   };
 
-  // Criar nota
   const createMutation = useMutation({
     mutationFn: async (input: CreateNoteInput) => {
       const response = await api.notes.post(input);
@@ -109,7 +106,6 @@ export function useNotes() {
     },
   });
 
-  // Atualizar nota
   const updateMutation = useMutation({
     mutationFn: async ({
       id,
@@ -118,7 +114,6 @@ export function useNotes() {
       id: string;
       input: UpdateNoteInput;
     }) => {
-      // Garantir que todos os campos estão presentes para a API
       const fullInput = {
         title: input.title ?? "",
         content: input.content ?? "",
@@ -143,7 +138,6 @@ export function useNotes() {
     },
   });
 
-  // Deletar nota
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
       const response = await api.notes({ id }).delete();

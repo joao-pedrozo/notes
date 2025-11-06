@@ -1,6 +1,6 @@
 # 📝 Notes App
 
-Uma clone do Apple Notes desenvolvido com arquitetura de monorepo, oferecendo uma experiência completa para criação, organização e gerenciamento de notas com suporte a categorias (pastas) e edição em Markdown.
+Clone do Apple Notes desenvolvido com arquitetura de monorepo, oferecendo uma experiência completa para criação, organização e gerenciamento de notas com suporte a categorias (pastas) e edição em Markdown.
 
 ## 🚀 Tecnologias
 
